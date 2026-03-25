@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id                String              @id
+  name              String
+  slug              String              @unique
+  createdAt         DateTime            @default(now()) @map("created_at")
+  products          Product[]
+  events            Event[]
+  dailyStats        StoreDailyStats[]
+  productDailyStats ProductDailyStats[]
+
+  @@map("stores")
+}
+
+model Product {
+  id        String   @id
+  storeId   String   @map("store_id")
+  name      String
+  price     Float
+  createdAt DateTime @default(now()) @map("created_at")
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@map("products")
+}
+
+model Event {
+  eventId    String   @id @map("event_id")
+  storeId    String   @map("store_id")
+  eventType  String   @map("event_type")
+  timestamp  DateTime
+  productId  String?  @map("product_id")
+  amount     Float?
+  currency   String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, timestamp(sort: Desc)])
+  @@index([storeId, eventType, timestamp(sort: Desc)])
+  @@map("events")
+}
+
+model StoreDailyStats {
+  id              String   @id @default(uuid())
+  storeId         String   @map("store_id")
+  date            DateTime
+  revenue         Float    @default(0)
+  pageViews       Int      @default(0) @map("page_views")
+  addToCart       Int      @default(0) @map("add_to_cart")
+  removeFromCart  Int      @default(0) @map("remove_from_cart")
+  checkoutStarted Int      @default(0) @map("checkout_started")
+  purchases       Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, date])
+  @@index([storeId, date(sort: Desc)])
+  @@map("store_daily_stats")
+}
+
+model ProductDailyStats {
+  id        String   @id @default(uuid())
+  storeId   String   @map("store_id")
+  date      DateTime
+  productId String   @map("product_id")
+  revenue   Float    @default(0)
+  purchases Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, date, productId])
+  @@index([storeId, productId])
+  @@index([storeId, date(sort: Desc)])
+  @@map("product_daily_stats")
+}
