@@ -145,4 +145,4 @@ npm run dev
 
 ## Time Spent
 
-- Approximately `ADD_YOUR_TIME_HERE`
+- Approximately `4 hours`
